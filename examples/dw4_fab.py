@@ -78,6 +78,7 @@ def run(cfg: DictConfig):
         print("running locally")
         cfg = to_local_config(cfg)
 
+    print(cfg)
     if cfg.target.custom_samples:
         print(f"loading custom dataset for temperature of {cfg.target.temperature}")
         load_dataset = partial(load_dataset_custom, temperature=cfg.target.temperature)
@@ -86,6 +87,7 @@ def run(cfg: DictConfig):
     experiment_config = create_train_config(cfg, target_log_p_x_fn=log_prob_fn,
                                             dim=2, n_nodes=4, load_dataset=load_dataset,
                                             date_folder=True)
+    print(experiment_config)
     train(experiment_config)
 
 

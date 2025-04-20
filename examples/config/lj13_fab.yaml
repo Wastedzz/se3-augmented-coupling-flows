@@ -20,7 +20,7 @@ flow:
 
 training:
   n_epoch: 14000 # approx how many iter we can do in the training time
-  batch_size: 1024 # Note per device if multiple devices used.
+  batch_size: 256 # Note per device if multiple devices used.
   use_multiple_devices: true
   eval_batch_size: 16 # Will be timez by K during eval.
   plot_batch_size: 32
@@ -33,11 +33,11 @@ training:
 
 logger:
 #  list_logger: null
-#  pandas_logger:
-#    save_period: 1000 # how often to save the pandas dataframe as a csv
-  wandb:
-    name: lj13_fab_${flow.type}
-    project: fab
-    entity: flow-ais-bootstrap
-    tags: [lj13,fab,Leucadendron]
+ pandas_logger:
+   save_period: 1000 # how often to save the pandas dataframe as a csv
+  # wandb:
+  #   name: lj13_fab_${flow.type}
+  #   project: fab
+  #   entity: flow-ais-bootstrap
+  #   tags: [lj13,fab,Leucadendron]
 

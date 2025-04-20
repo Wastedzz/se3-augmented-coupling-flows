@@ -86,13 +86,14 @@ def create_train_config_non_pmap(cfg: DictConfig, target_log_p_x_fn, load_datase
     if cfg.flow.type == 'non_equivariant' or 'non_equivariant' in cfg.flow.type:
         n_epoch = n_epoch * cfg.training.factor_to_train_non_eq_flow
 
-
     opt_cfg = dict(training_config.pop("optimizer"))
+    # jax.debug.breakpoint()
     n_iter_warmup = opt_cfg.pop('warmup_n_epoch')*cfg.fab.n_updates_per_smc_forward_pass
     n_iter_total = n_epoch*cfg.fab.n_updates_per_smc_forward_pass
     optimizer_config = OptimizerConfig(**opt_cfg,
                                        n_iter_total=n_iter_total,
                                        n_iter_warmup=n_iter_warmup)
+    # jax.debug.breakpoint()
     optimizer, lr = get_optimizer(optimizer_config)
 
 
@@ -302,8 +303,8 @@ def create_train_config_pmap(cfg: DictConfig, target_log_p_x_fn, load_dataset, d
         per_device_keys = jax.random.split(per_device_key, n_devices)
         init_state = jax.pmap(init_single_device_fn)(common_keys, per_device_keys)
         # Run check to ensure params are synched.
-        chex.assert_trees_all_equal(jax.tree_map(lambda x: x[0], init_state.params),
-                                    jax.tree_map(lambda x: x[1], init_state.params))
+        chex.assert_trees_all_equal(jax.tree.map(lambda x: x[0], init_state.params),
+                                    jax.tree.map(lambda x: x[1], init_state.params))
         assert (init_state.key[0] != init_state.key[1]).all()  # Check rng per state is different.
         return init_state
 

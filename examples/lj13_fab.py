@@ -7,7 +7,6 @@ from eacf.train.train import train
 from eacf.targets.data import load_lj13
 from eacf.targets.target_energy.leonard_jones import log_prob_fn
 
-
 def load_dataset(train_set_size: int, valid_set_size: int, final_run: bool = True):
     train, valid, test = load_lj13(train_set_size)
     if not final_run:
@@ -50,13 +49,15 @@ def run(cfg: DictConfig):
     local_config = False
     if local_config:
         cfg = to_local_config(cfg)
-
+    print(cfg)
+    
     experiment_config = create_train_config(cfg,
                                             target_log_p_x_fn=log_prob_fn,
                                             dim=3,
                                             n_nodes=13,
                                             load_dataset=load_dataset,
-                                            date_folder=False)
+                                            date_folder=True)
+    print(experiment_config)
     train(experiment_config)
 
 
