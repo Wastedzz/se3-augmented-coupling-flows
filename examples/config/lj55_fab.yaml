@@ -13,6 +13,8 @@ hydra:
 
 fab:
   n_intermediate_distributions: 8
+  eval_inner_batch_size: 8
+  eval_total_batch_size: 1000
 
 flow:
   n_aug: 1
@@ -22,11 +24,11 @@ training:
   n_epoch: 14000 # approx how many iter we can do in the training time
   batch_size: 8 # Note per device if multiple devices used.
   use_multiple_devices: true
-  eval_batch_size: 8 # Will be timez by K during eval.
-  plot_batch_size: 8
+  eval_batch_size: 4 # Will be timez by K during eval.
+  plot_batch_size: 4
   seed: 0
   train_set_size: 1000
-  test_set_size: 100
+  test_set_size: 50
   aux_loss_weight: 1.0
   data_augmentation_for_non_eq: false # Only use for training by maximum likelihood.
 
