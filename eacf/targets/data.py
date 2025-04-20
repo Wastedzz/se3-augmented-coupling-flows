@@ -4,7 +4,7 @@ from pathlib import Path
 import jax.numpy as jnp
 import numpy as np
 import mdtraj
-
+import jax
 from eacf.utils.base import positional_dataset_only_to_full_graph, FullGraphSample
 from eacf.targets.qm9_download_data.dataset import qm9pos_download_and_save_data
 
@@ -87,6 +87,43 @@ def load_lj13(
     val_data = jnp.reshape(val_data, (-1, 13, 3))
     test_data = jnp.reshape(test_data, (-1, 13, 3))
     train_data = jnp.reshape(train_data, (-1, 13, 3))
+
+    return (
+        positional_dataset_only_to_full_graph(train_data),
+        positional_dataset_only_to_full_graph(val_data),
+        positional_dataset_only_to_full_graph(test_data),
+    )
+    
+    
+def load_lj55(
+    train_set_size: int = 1000, path: Optional[Union[Path, str]] = None
+) -> Tuple[FullGraphSample, FullGraphSample, FullGraphSample]:
+    # dataset from https://github.com/vgsatorras/en_flows
+    # Loading following https://github.com/vgsatorras/en_flows/blob/main/dw4_experiment/dataset.py.
+
+    # Train data
+    if path is None:
+        here = Path(__file__).parent
+        path = here / "data"
+    path = Path(path)
+    fpath_train = path / "train_split_LJ55-1000-part1.npy"
+    fpath_val = path / "val_split_LJ55-1000-part1.npy"
+    fpath_test = path / "test_split_LJ55-1000-part1.npy"
+    
+
+    train_data = jnp.asarray(np.load(fpath_train, allow_pickle=True), dtype=float)
+    val_data = jnp.asarray(np.load(fpath_val, allow_pickle=True), dtype=float)[:1000]
+    test_data = jnp.asarray(np.load(fpath_test, allow_pickle=True), dtype=float)[:1000]
+
+    key = jax.random.PRNGKey(0)
+    data_size = train_data.shape[0]
+    subset_size = min(train_set_size, data_size)
+    indices = jax.random.permutation(key, data_size)[:subset_size]
+    train_data = train_data[indices]
+
+    val_data = jnp.reshape(val_data, (-1, 55, 3))
+    test_data = jnp.reshape(test_data, (-1, 55, 3))
+    train_data = jnp.reshape(train_data, (-1, 55, 3))
 
     return (
         positional_dataset_only_to_full_graph(train_data),
