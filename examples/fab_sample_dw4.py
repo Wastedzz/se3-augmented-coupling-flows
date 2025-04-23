@@ -11,6 +11,9 @@ from eacf.targets.data import load_dw4
 from eacf.setup_run.create_fab_train_config import create_train_config
 from eacf.targets.target_energy.double_well import make_dataset, log_prob_fn
 from eacf.utils.data import positional_dataset_only_to_full_graph
+import torch
+import numpy as np
+import os
 
 def load_dataset_original(train_set_size: int, valid_set_size: int, final_run: bool = True):
     train, valid, test = load_dw4(train_set_size)
@@ -75,7 +78,7 @@ def to_local_config(cfg: DictConfig) -> DictConfig:
 
 @hydra.main(config_path="./config", config_name="dw4_fab.yaml")
 def run(cfg: DictConfig):
-    local_config = True
+    local_config = False
     if local_config:
         print("running locally")
         cfg = to_local_config(cfg)
@@ -95,13 +98,15 @@ def run(cfg: DictConfig):
         state = pickle.load(f)
     train_data, test_data = load_dataset(cfg.training.train_set_size, cfg.training.test_set_size)
     flow_samples = fab_eval_function(
-    state=state, key=key, flow=flow,
-    log_p_x=log_prob_fn,
-    features=test_data.features[0],
-    batch_size=cfg.fab.eval_total_batch_size,
-    inner_batch_size=cfg.fab.eval_inner_batch_size
-    )
-    print(flow_samples.shape)
+                    state=state, key=key, flow=flow,
+                    log_p_x=log_prob_fn,
+                    features=test_data.features[0],
+                    batch_size=cfg.fab.eval_total_batch_size,
+                    inner_batch_size=cfg.fab.eval_inner_batch_size
+                    )
+    flow_samples = torch.from_numpy(np.asarray(flow_samples))
+    os.makedirs('./fab_results/{}/'.format(cfg.fab.save_des),exist_ok=True)
+    torch.save(flow_samples, './fab_results/{}/samples_{}.pt'.format(cfg.fab.save_des, cfg.fab.eval_total_batch_size))
 
 
 if __name__ == '__main__':

@@ -11,19 +11,20 @@ from eacf.flow.aug_flow_dist import AugmentedFlow, GraphFeatures
 from eacf.train.fab_train_no_buffer import TrainStateNoBuffer, flat_log_prob_components, get_joint_log_prob_target
 from eacf.train.fab_train_with_buffer import TrainStateWithBuffer
 
+def process_samples(joint_samples: chex.Array) -> Tuple[chex.Array, chex.Array, chex.Array]:
+    x, a = jnp.split(joint_samples, [1, ], axis=-2)
+    x = jnp.squeeze(x, axis=-2)
+    return x
+
 
 def fab_eval_function(state: Union[TrainStateNoBuffer, TrainStateWithBuffer],
                       key: chex.PRNGKey,
                       flow: AugmentedFlow,
-                      smc: SequentialMonteCarloSampler,
                       log_p_x,
                       features: GraphFeatures,
                       batch_size: int,
                       inner_batch_size: int) -> dict:
     """Evaluate the ESS of the flow, and AIS. """
-    assert smc.alpha == 1.  # Make sure target_energy is set to p.
-    assert smc.use_resampling is False  # Make sure we are doing AIS, not SMC.
-
     # Setup scan function.
     features_with_multiplicity = features[:, None]
     n_nodes = features.shape[0]
@@ -39,11 +40,11 @@ def fab_eval_function(state: Union[TrainStateNoBuffer, TrainStateWithBuffer],
         """Perform SMC forward pass and grab just the importance weights."""
         key = xs
         sample_flow, log_q_flow = flow.sample_and_log_prob_apply(state.params, features, key, (inner_batch_size,))
-        x0 = flatten(sample_flow.positions)
-        return x0 
+        # return None, (x0,)
+        return None, (process_samples(sample_flow.positions),)
 
     # Run scan function.
     n_batches = int(np.ceil(batch_size // inner_batch_size))
-    flow_sample = jax.lax.scan(inner_fn, init=None, xs=jax.random.split(key, n_batches))
-
-    return flow_sample
+    _, (flow_sample,) = jax.lax.scan(inner_fn, init=None, xs=jax.random.split(key, n_batches))
+    new_shape = (flow_sample.shape[0]*flow_sample.shape[1], -1)
+    return flow_sample.reshape(new_shape)
